@@ -1,4 +1,7 @@
 <?php
+
+/* vim: set expandtab tabstop=4 shiftwidth=4 foldmethod=marker: */
+
 /**
  * HTTP_OAuth
  *
@@ -22,6 +25,8 @@
  */
 
 require_once 'HTTP/OAuth.php';
+require_once 'HTTP/OAuth/Parameter.php';
+require_once 'HTTP/OAuth/ParameterList.php';
 
 /**
  * HTTP_OAuth_Message
@@ -39,54 +44,29 @@ require_once 'HTTP/OAuth.php';
  * @link      http://pear.php.net/package/HTTP_OAuth
  * @link      http://github.com/jeffhodsdon/HTTP_OAuth
  */
-abstract class HTTP_OAuth_Message
-extends HTTP_OAuth
-implements ArrayAccess, Countable, IteratorAggregate
+abstract class HTTP_OAuth_Message extends HTTT_OAuth
+    implements ArrayAccess, Countable, IteratorAggregate
 {
-
     /**
-     * OAuth Parameters
+     * Parameters of this message
      *
-     * @var string $oauthParams OAuth parameters
+     * @var HTTP_OAuth_ParameterList
      */
-    static protected $oauthParams = array(
-        'consumer_key',
-        'token',
-        'token_secret',
-        'signature_method',
-        'signature',
-        'timestamp',
-        'nonce',
-        'verifier',
-        'version',
-        'callback',
-        'session_handle'
-    );
+    protected $parameters = null;
+
+    public function __construct()
+    {
+        $this->parameters = new HTTP_OAuth_ParameterList();
+    }
 
     /**
-     * Parameters
+     * Gets OAuth specific parameters
      *
-     * @var array $parameters Parameters
-     */
-    protected $parameters = array();
-
-    /**
-     * Get OAuth specific parameters
-     *
-     * @return array OAuth specific parameters
+     * @return HTTP_OAuth_ParameterList OAuth specific parameters
      */
     public function getOAuthParameters()
     {
-        $params = array();
-        foreach (self::$oauthParams as $param) {
-            if ($this->$param !== null) {
-                $params[$this->prefixParameter($param)] = $this->$param;
-            }
-        }
-
-        ksort($params);
-
-        return $params;
+        return $this->parameters->getOAuthOnly();
     }
 
     /**
@@ -96,10 +76,7 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function getParameters()
     {
-        $params = $this->parameters;
-        ksort($params);
-
-        return $params;
+        return $this->parameters->sort();
     }
 
     /**
@@ -111,9 +88,7 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function setParameters(array $params)
     {
-        foreach ($params as $name => $value) {
-            $this->parameters[$this->prefixParameter($name)] = $value;
-        }
+        $this->paramaters->setMulti($params);
     }
 
     /**
@@ -123,11 +98,13 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function getSignatureMethod()
     {
-        if ($this->oauth_signature_method !== null) {
-            return $this->oauth_signature_method;
+        $method = $this->signature_method;
+
+        if ($method === null) {
+            $method = 'HMAC-SHA1';
         }
 
-        return 'HMAC-SHA1';
+        return $method;
     }
 
     /**
@@ -139,17 +116,22 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function __get($var)
     {
-        $var = $this->prefixParameter($var);
-        if (array_key_exists($var, $this->parameters)) {
-            return $this->parameters[$var];
+        $value = null;
+
+        // check if parameter exists
+        if ($value === null) {
+            $param = $this->parameters->var;
         }
 
-        $method = 'get' . ucfirst($var);
-        if (method_exists($this, $method)) {
-            return $this->$method();
+        // check if method exists (i.e. getBody())
+        if ($value ===  null) {
+            $method = 'get' . ucfirst($var);
+            if (method_exists($this, $method)) {
+                $value = $this->$method();
+            }
         }
 
-        return null;
+        return $value;
     }
 
     /**
@@ -162,7 +144,7 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function __set($var, $val)
     {
-        $this->parameters[$this->prefixParameter($var)] = $val;
+        $this->parameters->$var = $val;
     }
 
     /**
@@ -174,7 +156,7 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function offsetExists($offset)
     {
-        return isset($this->parameters[$this->prefixParameter($offset)]);
+        return (isset($this->parameters[$offset]));
     }
 
     /**
@@ -186,7 +168,7 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function offsetGet($offset)
     {
-        return $this->parameters[$this->prefixParameter($offset)];
+        return $this->parameters[$offset];
     }
 
     /**
@@ -199,7 +181,7 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function offsetSet($offset, $value)
     {
-        $this->parameters[$this->prefixParameter($offset)] = $value;
+        $this->parameters[$offset] = $value;
     }
 
     /**
@@ -211,7 +193,7 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function offsetUnset($offset)
     {
-        unset($this->parameters[$this->prefixParameter($offset)]);
+        unset($this->parameters[$offset]);
     }
 
     /**
@@ -231,27 +213,8 @@ implements ArrayAccess, Countable, IteratorAggregate
      */
     public function getIterator()
     {
-        return new ArrayIterator($this->parameters);
+        return $this->parameters->getIterator();
     }
-
-    /**
-     * Prefix parameter
-     *
-     * Prefixes a parameter name with oauth_ if it is a valid oauth paramter
-     *
-     * @param string $param Name of the parameter
-     *
-     * @return string Prefix parameter
-     */
-    protected function prefixParameter($param)
-    {
-        if (in_array($param, self::$oauthParams)) {
-            $param = 'oauth_' . $param;
-        }
-
-        return $param;
-    }
-
 }
 
 ?>

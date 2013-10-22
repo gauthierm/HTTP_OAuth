@@ -1,4 +1,7 @@
 <?php
+
+/* vim: set expandtab tabstop=4 shiftwidth=4 foldmethod=marker: */
+
 /**
  * HTTP_OAuth
  *
@@ -147,12 +150,15 @@ class HTTP_OAuth_Provider_Request extends HTTP_OAuth_Message
     public function setParametersFromRequest()
     {
         $params = array();
-        $auth   = $this->getHeader('Authorization');
+
+        // get Authorization header parameters
+        $auth = $this->getHeader('Authorization');
         if ($auth !== null) {
             $this->debug('Using OAuth data from header');
             $parts = explode(',', $auth);
             foreach ($parts as $part) {
-                list($key, $value) = explode('=', trim($part));
+                list($name, $value) = explode('=', trim($part), 2);
+
                 if (strstr(strtolower($key), 'oauth ')
                     || strstr(strtolower($key), 'uth re')
                     || substr(strtolower($key), 0, 6) != 'oauth_'
@@ -163,10 +169,14 @@ class HTTP_OAuth_Provider_Request extends HTTP_OAuth_Message
                 $value = trim($value);
                 $value = str_replace('"', '', $value);
 
-                $params[$key] = $value;
+                $params[] = new HTTP_OAuth_Parameter(
+                    HTTP_OAuth::urldecode($name),
+                    HTTP_OAuth::urldecode($value)
+                );
             }
         }
 
+        // get HTTP POST or PUT data parameters
         if ($this->getRequestMethod() == 'POST' || $this->getRequestMethod() == 'PUT') {
             $this->debug('getting data from POST');
             $contentType = substr($this->getHeader('Content-Type'), 0, 33);
@@ -191,7 +201,7 @@ class HTTP_OAuth_Provider_Request extends HTTP_OAuth_Message
                 'data found from request');
         }
 
-        $this->setParameters(HTTP_OAuth::urldecode($params));
+        $this->parameters = $params;
     }
 
     /**
@@ -345,7 +355,8 @@ class HTTP_OAuth_Provider_Request extends HTTP_OAuth_Message
      */
     protected function parseQueryString($string)
     {
-        $data = array();
+        $params = array();
+
         if (empty($string)) {
             return $data;
         }
@@ -355,11 +366,15 @@ class HTTP_OAuth_Provider_Request extends HTTP_OAuth_Message
                 continue;
             }
 
-            list($key, $value) = explode('=', $part);
-            $data[$key] = self::urldecode($value);
+            list($name, $value) = explode('=', $part, 2);
+
+            $params[] = new HTTP_OAuth_Param(
+                HTTP_OAuth::urldecode($name),
+                HTTP_OAuth::urldecode($value)
+            );
         }
 
-        return $data;
+        return $params;
     }
 
 }

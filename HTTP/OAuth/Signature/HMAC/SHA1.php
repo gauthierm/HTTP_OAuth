@@ -1,4 +1,7 @@
 <?php
+
+/* vim: set expandtab tabstop=4 shiftwidth=4 foldmethod=marker: */
+
 /**
  * HTTP_OAuth
  *
@@ -42,21 +45,27 @@ class HTTP_OAuth_Signature_HMAC_SHA1 extends HTTP_OAuth_Signature_Common
     /**
      * Build
      *
-     * @param string $method         HTTP method used
-     * @param string $url            URL of the request
-     * @param array  $params         Parameters of the request
-     * @param string $consumerSecret Consumer secret value
-     * @param string $tokenSecret    Token secret value (if exists)
+     * @param string                   $method         HTTP method used
+     * @param string                   $url            URL of the request
+     * @param HTTP_OAuth_ParameterList $params         Parameters of the request
+     * @param string                   $consumerSecret Consumer secret value
+     * @param string                   $tokenSecret    Token secret value (if exists)
      *
      * @return string Signature
      */
-    public function build($method, $url, array $params, $consumerSecret,
+    public function build(
+        $method,
+        $url,
+        HTTP_OAuth_ParameterList $params,
+        $consumerSecret,
         $tokenSecret = ''
     ) {
         return base64_encode(
             hash_hmac(
-                'sha1', $this->getBase($method, $url, $params),
-                $this->getKey($consumerSecret, $tokenSecret), true
+                'sha1',
+                $this->getBase($method, $url, $params),
+                $this->getKey($consumerSecret, $tokenSecret),
+                true
             )
         );
     }

@@ -1,4 +1,7 @@
 <?php
+
+/* vim: set expandtab tabstop=4 shiftwidth=4 foldmethod=marker: */
+
 /**
  * HTTP_OAuth
  *
@@ -38,19 +41,22 @@ require_once 'HTTP/OAuth/Signature/Common.php';
  */
 class HTTP_OAuth_Signature_PLAINTEXT extends HTTP_OAuth_Signature_Common
 {
-
     /**
      * Build
      *
-     * @param string $method         HTTP method used
-     * @param string $url            URL of the request
-     * @param array  $params         Parameters of the request
-     * @param string $consumerSecret Consumer secret value
-     * @param string $tokenSecret    Token secret value (if exists)
+     * @param string                   $method         HTTP method used
+     * @param string                   $url            URL of the request
+     * @param HTTP_OAuth_ParameterList $params         Parameters of the request
+     * @param string                   $consumerSecret Consumer secret value
+     * @param string                   $tokenSecret    Token secret value (if exists)
      *
      * @return string Signature
      */
-    public function build($method, $url, array $params, $consumerSecret,
+    public function build(
+        $method,
+        $url,
+        HTTP_OAuth_ParameterList $params,
+        $consumerSecret,
         $tokenSecret = ''
     ) {
         return $this->getKey($consumerSecret, $tokenSecret);

@@ -1,4 +1,7 @@
 <?php
+
+/* vim: set expandtab tabstop=4 shiftwidth=4 foldmethod=marker: */
+
 /**
  * HTTP_OAuth
  *
@@ -22,6 +25,7 @@
  */
 
 require_once 'HTTP/OAuth.php';
+require_once 'HTTP/OAuth/ParameterList.php';
 
 /**
  * HTTP_OAuth_Signature_Common
@@ -39,28 +43,31 @@ require_once 'HTTP/OAuth.php';
  */
 abstract class HTTP_OAuth_Signature_Common extends HTTP_OAuth
 {
-
     /**
      * Get base
      *
-     * @param mixed $method HTTP method used in the request
-     * @param mixed $url    URL of the request
-     * @param array $params Parameters in the request
+     * @param mixed                    $method HTTP method used in the request
+     * @param mixed                    $url    URL of the request
+     * @param HTTP_OAuth_ParameterList $params Parameters in the request
      *
      * @return string Base signature string
      */
-    public function getBase($method, $url, array $params)
+    public function getBase($method, $url, HTTP_OAuth_ParameterList $params)
     {
-        if (array_key_exists('oauth_signature', $params)) {
-            unset($params['oauth_signature']);
-        }
-        
+        $params->removeByName('oauth_signature');
+
         $urlParts = explode('?', $url);
-        
-        $parts = array($method, $urlParts[0],
-            HTTP_OAuth::buildHTTPQuery($params));
-        $base  = implode('&', HTTP_OAuth::urlencode($parts));
+
+        $parts = array(
+            $method,
+            $urlParts[0],
+            HTTP_OAuth::buildHTTPQuery($params)
+        );
+
+        $base = implode('&', HTTP_OAuth::urlencode($parts));
+
         $this->debug('Signing with base string: ' . $base);
+
         return $base;
     }
 
@@ -83,16 +90,20 @@ abstract class HTTP_OAuth_Signature_Common extends HTTP_OAuth
     /**
      * Build
      *
-     * @param string $method         HTTP method used
-     * @param string $url            URL of the request
-     * @param array  $params         Parameters of the request
-     * @param string $consumerSecret Consumer secret value
-     * @param string $tokenSecret    Token secret value (if exists)
+     * @param string                   $method         HTTP method used
+     * @param string                   $url            URL of the request
+     * @param HTTP_OAuth_ParameterList $params         Parameters of the request
+     * @param string                   $consumerSecret Consumer secret value
+     * @param string                   $tokenSecret    Token secret value (if exists)
      *
      * @return string Signature
      */
-    abstract public function build($method, $url, array $params,
-        $consumerSecret, $tokenSecret = ''
+    abstract public function build(
+        $method,
+        $url,
+        HTTP_OAuth_ParameterList $params,
+        $consumerSecret,
+        $tokenSecret = ''
     );
 }
 
